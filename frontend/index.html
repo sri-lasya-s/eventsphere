@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EventSphere</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #ffffff;
+      --surface: #f8f8fc;
+      --surface2: #f0f0f8;
+      --border: rgba(0,0,0,0.08);
+      --accent: #7c6ff7;
+      --accent2: #f472b6;
+      --text: #111118;
+      --muted: #6b6b80;
+      --success: #16a34a;
+      --warning: #d97706;
+      --error: #dc2626;
+      --radius: 16px;
+      --radius-sm: 8px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.6; }
+
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 2rem;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1.4rem; color: var(--text); }
+    .nav-actions { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+    .nav-tab { padding: .4rem .9rem; border-radius: 50px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: .85rem; font-family: 'DM Sans', sans-serif; transition: all .2s; }
+    .nav-tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    main { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+    .btn { display: inline-flex; align-items: center; gap: .4rem; padding: .55rem 1.2rem; border-radius: 50px; border: none; font-family: 'DM Sans', sans-serif; font-size: .9rem; font-weight: 500; cursor: pointer; transition: all .2s ease; white-space: nowrap; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #6b5ef0; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(124,111,247,.3); }
+    .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-danger { background: var(--error); color: #fff; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-warning { background: var(--warning); color: #fff; }
+    .btn-sm { padding: .35rem .85rem; font-size: .8rem; }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; transition: border-color .2s, transform .2s, box-shadow .2s; }
+    .card:hover { border-color: rgba(124,111,247,.3); transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,.08); }
+
+    .events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.5rem; }
+
+    .status-badge { display: inline-block; padding: .2rem .7rem; border-radius: 50px; font-size: .75rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+    .status-UPCOMING  { background: rgba(124,111,247,.15); color: var(--accent); }
+    .status-ONGOING   { background: rgba(22,163,74,.15); color: var(--success); }
+    .status-COMPLETED { background: rgba(107,107,128,.15); color: var(--muted); }
+    .status-CANCELLED { background: rgba(220,38,38,.15); color: var(--error); }
+
+    .event-title { font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; margin: .6rem 0 .4rem; }
+    .event-meta { display: flex; flex-wrap: wrap; gap: .5rem; margin: .75rem 0; }
+    .meta-pill { display: flex; align-items: center; gap: .3rem; padding: .25rem .65rem; border-radius: 50px; background: var(--surface2); border: 1px solid var(--border); font-size: .78rem; color: var(--muted); }
+    .event-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+    .capacity-bar { width: 100%; height: 4px; background: var(--surface2); border-radius: 2px; margin: .5rem 0; }
+    .capacity-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width .4s; }
+
+    .weather-widget { background: linear-gradient(135deg, rgba(124,111,247,.1), rgba(244,114,182,.08)); border: 1px solid rgba(124,111,247,.25); border-radius: var(--radius); padding: 1.25rem; display: flex; align-items: center; gap: 1rem; }
+    .weather-temp { font-family: 'Syne', sans-serif; font-size: 2.5rem; font-weight: 800; }
+    .weather-desc { color: var(--muted); font-size: .85rem; text-transform: capitalize; }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); backdrop-filter: blur(8px); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; pointer-events: none; transition: opacity .25s; }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; transform: translateY(20px); transition: transform .25s; box-shadow: 0 24px 64px rgba(0,0,0,.15); }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-title { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 700; margin-bottom: 1.5rem; }
+
+    .form-group { margin-bottom: 1.1rem; }
+    label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: .4rem; }
+    input, textarea, select { width: 100%; padding: .7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: .9rem; transition: border-color .2s; }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+    textarea { resize: vertical; min-height: 80px; }
+
+    .toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 300; display: flex; flex-direction: column; gap: .5rem; }
+    .toast { padding: .8rem 1.2rem; border-radius: var(--radius-sm); font-size: .875rem; font-weight: 500; min-width: 240px; animation: slideIn .3s ease; }
+    .toast-success { background: #f0fdf4; border: 1px solid var(--success); color: var(--success); }
+    .toast-error   { background: #fef2f2; border: 1px solid var(--error); color: var(--error); }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: none; opacity: 1; } }
+
+    .hero { text-align: center; padding: 4rem 1rem 3rem; }
+    .hero h1 { font-family: 'DM Sans', sans-serif; font-size: clamp(2.2rem, 5vw, 3.8rem); font-weight: 700; line-height: 1.1; margin-bottom: 1rem; color: var(--text); }
+.hero h1 span { color: var(--text); }
+    .hero p { color: var(--muted); font-size: 1.1rem; max-width: 500px; margin: 0 auto 2rem; }
+
+    .filters { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 2rem; align-items: center; }
+    .filter-chip { padding: .4rem 1rem; border-radius: 50px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: .85rem; transition: all .2s; font-family: 'DM Sans', sans-serif; }
+    .filter-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .search-input { flex: 1; min-width: 200px; max-width: 340px; padding: .45rem 1rem; border-radius: 50px; }
+
+    .event-detail { display: grid; grid-template-columns: 1fr 340px; gap: 2rem; }
+    @media (max-width: 768px) { .event-detail { grid-template-columns: 1fr; } .events-grid { grid-template-columns: 1fr; } }
+
+    .section-title { font-family: 'Syne', sans-serif; font-size: .85rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 1rem; }
+
+    .skeleton { background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%); background-size: 200%; animation: shimmer 1.4s infinite; border-radius: var(--radius-sm); }
+    @keyframes shimmer { to { background-position: -200% 0; } }
+    .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty-state { text-align: center; padding: 4rem 1rem; color: var(--muted); }
+    .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
+
+    .page-section { display: none; }
+    .page-section.active { display: block; }
+
+    .admin-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    .admin-table th { text-align: left; padding: .75rem 1rem; background: var(--surface2); color: var(--muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; }
+    .admin-table td { padding: .75rem 1rem; border-bottom: 1px solid var(--border); }
+    .admin-table tr:hover td { background: var(--surface); }
+    .role-badge { padding: .2rem .6rem; border-radius: 50px; font-size: .72rem; font-weight: 600; }
+    .role-ORGANIZER { background: rgba(124,111,247,.1); color: var(--accent); }
+    .role-ATTENDEE { background: rgba(107,107,128,.1); color: var(--muted); }
+    .owner-actions { display: flex; gap: .4rem; margin-top: .75rem; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">EventSphere</div>
+  <div style="display:flex;gap:.5rem" id="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('events')">Events</button>
+    <button class="nav-tab" id="tab-organizer" style="display:none" onclick="showPage('organizer')">📋 My Dashboard</button>
+  </div>
+  <div class="nav-actions">
+    <div id="nav-user-info" style="display:none;color:var(--muted);font-size:.85rem;"></div>
+    <button class="btn btn-primary btn-sm" id="btn-login" onclick="openModal('login')">Log In</button>
+    <button class="btn btn-primary btn-sm" id="btn-register" onclick="openModal('register')">Sign Up</button>
+    <button class="btn btn-ghost btn-sm" id="btn-logout" style="display:none" onclick="logout()">Log Out</button>
+    <button class="btn btn-primary btn-sm" id="btn-create" style="display:none" onclick="openModal('create')">+ Create Event</button>
+  </div>
+</nav>
+
+<main>
+
+  <!-- ── EVENTS PAGE ── -->
+  <div id="page-events" class="page-section active">
+    <div class="hero">
+      <h1>Discover & Host<br></h1>
+      <p>Find local events with real-time weather forecasts. Never get caught in the rain again.</p>
+      <button class="btn btn-primary" onclick="document.getElementById('events-section').scrollIntoView({behavior:'smooth'})">Browse Events ↓</button>
+    </div>
+    <div class="filters" id="events-section">
+      <input class="search-input" type="text" placeholder="🔍  Search events…" id="search-input" oninput="debounceSearch()" />
+      <button class="filter-chip active" data-status="" onclick="setFilter('')">All</button>
+      <button class="filter-chip" data-status="UPCOMING" onclick="setFilter('UPCOMING')">Upcoming</button>
+      <button class="filter-chip" data-status="ONGOING" onclick="setFilter('ONGOING')">Ongoing</button>
+    </div>
+    <div class="events-grid" id="events-grid">
+      <div class="card skeleton" style="height:220px"></div>
+      <div class="card skeleton" style="height:220px"></div>
+      <div class="card skeleton" style="height:220px"></div>
+    </div>
+  </div>
+
+  <!-- ── ORGANIZER DASHBOARD ── -->
+  <div id="page-organizer" class="page-section">
+    <h2 style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;margin-bottom:2rem">📋 My Dashboard</h2>
+
+    <div class="card" style="margin-bottom:2rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem">
+        <div class="section-title" style="margin:0">My Events</div>
+        <button class="btn btn-primary btn-sm" onclick="openModal('create')">+ Create Event</button>
+      </div>
+      <div id="my-events-list"></div>
+    </div>
+
+    <div class="card" style="margin-bottom:2rem">
+      <div class="section-title">Who RSVP'd to My Events</div>
+      <div id="my-rsvps-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">All Users</div>
+      <div id="organizer-users" style="overflow-x:auto"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── Event Detail ── -->
+<div class="modal-overlay" id="modal-detail">
+  <div class="modal" style="max-width:860px" id="detail-content"></div>
+</div>
+
+<!-- ── Update Event ── -->
+<div class="modal-overlay" id="modal-update">
+  <div class="modal">
+    <div class="modal-title">✏️ Update Event</div>
+    <input type="hidden" id="upd-id" />
+    <div class="form-group"><label>Title</label><input type="text" id="upd-title" /></div>
+    <div class="form-group"><label>Description</label><textarea id="upd-desc"></textarea></div>
+    <div class="form-group"><label>Location</label><input type="text" id="upd-location" /></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="form-group"><label>Start Date</label><input type="datetime-local" id="upd-start" /></div>
+      <div class="form-group"><label>End Date</label><input type="datetime-local" id="upd-end" /></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="form-group"><label>Capacity</label><input type="number" id="upd-capacity" min="1" /></div>
+      <div class="form-group"><label>Status</label>
+        <select id="upd-status">
+          <option value="UPCOMING">Upcoming</option>
+          <option value="ONGOING">Ongoing</option>
+          <option value="COMPLETED">Completed</option>
+          <option value="CANCELLED">Cancelled</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:.75rem;margin-top:1.5rem">
+      <button class="btn btn-primary" style="flex:1" onclick="submitUpdateEvent()">Save Changes</button>
+      <button class="btn btn-ghost" onclick="closeModal('update')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Login ── -->
+<div class="modal-overlay" id="modal-login">
+  <div class="modal">
+    <div class="modal-title">Welcome back</div>
+    <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="you@example.com" /></div>
+    <div class="form-group"><label>Password</label><input type="password" id="login-password" placeholder="••••••••" /></div>
+    <div style="display:flex;gap:.75rem;margin-top:1.5rem">
+      <button class="btn btn-primary" style="flex:1" onclick="login()">Log In</button>
+      <button class="btn btn-ghost" onclick="closeModal('login')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Register ── -->
+<div class="modal-overlay" id="modal-register">
+  <div class="modal">
+    <div class="modal-title">Create Account</div>
+    <div class="form-group"><label>Full Name</label><input type="text" id="reg-name" placeholder="Jane Smith" /></div>
+    <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="you@example.com" /></div>
+    <div class="form-group"><label>Password</label><input type="password" id="reg-password" placeholder="min 8 characters" /></div>
+    <div style="display:flex;gap:.75rem;margin-top:1.5rem">
+      <button class="btn btn-primary" style="flex:1" onclick="register()">Sign Up</button>
+      <button class="btn btn-ghost" onclick="closeModal('register')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Create Event ── -->
+<div class="modal-overlay" id="modal-create">
+  <div class="modal">
+    <div class="modal-title">Create New Event</div>
+    <div class="form-group"><label>Title</label><input type="text" id="ev-title" placeholder="Event name" /></div>
+    <div class="form-group"><label>Description</label><textarea id="ev-desc" placeholder="Tell people what to expect…"></textarea></div>
+    <div class="form-group"><label>Location</label><input type="text" id="ev-location" placeholder="Chicago, IL" /></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="form-group"><label>Start Date</label><input type="datetime-local" id="ev-start" /></div>
+      <div class="form-group"><label>End Date</label><input type="datetime-local" id="ev-end" /></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="form-group"><label>Capacity</label><input type="number" id="ev-capacity" min="1" value="100" /></div>
+      <div class="form-group"><label>Category</label><select id="ev-category"></select></div>
+    </div>
+    <div style="display:flex;gap:.75rem;margin-top:1.5rem">
+      <button class="btn btn-primary" style="flex:1" onclick="submitCreateEvent()">Create Event</button>
+      <button class="btn btn-ghost" onclick="closeModal('create')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+const API = "/graphql";
+let token = localStorage.getItem("es_token");
+let currentUser = JSON.parse(localStorage.getItem("es_user") || "null");
+let activeFilter = "";
+let searchTimeout = null;
+
+async function gql(query, variables = {}) {
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(API, { method: "POST", headers, body: JSON.stringify({ query, variables }) });
+  const json = await res.json();
+  if (json.errors) throw new Error(json.errors[0].message);
+  return json.data;
+}
+
+function toast(msg, type = "success") {
+  const el = document.createElement("div");
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  document.getElementById("toasts").appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+function openModal(id) { document.getElementById(`modal-${id}`).classList.add("open"); }
+function closeModal(id) { document.getElementById(`modal-${id}`).classList.remove("open"); }
+document.querySelectorAll(".modal-overlay").forEach(o =>
+  o.addEventListener("click", e => { if (e.target === o) o.classList.remove("open"); })
+);
+
+function showPage(page) {
+  document.querySelectorAll(".page-section").forEach(s => s.classList.remove("active"));
+  document.getElementById(`page-${page}`).classList.add("active");
+  document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+  document.querySelector(`[onclick="showPage('${page}')"]`).classList.add("active");
+  if (page === "organizer") loadOrganizerDashboard();
+}
+
+function updateAuthUI() {
+  const loggedIn = !!token;
+  document.getElementById("btn-login").style.display    = loggedIn ? "none" : "";
+  document.getElementById("btn-register").style.display = loggedIn ? "none" : "";
+  document.getElementById("btn-logout").style.display   = loggedIn ? "" : "none";
+  const isOrganizer = loggedIn && currentUser?.role === "ORGANIZER";
+  document.getElementById("btn-create").style.display   = isOrganizer ? "" : "none";
+  document.getElementById("tab-organizer").style.display = isOrganizer ? "" : "none";
+  const info = document.getElementById("nav-user-info");
+  if (loggedIn && currentUser) {
+    info.style.display = "";
+    info.innerHTML = `👤 <strong>${currentUser.name}</strong> <span style="background:var(--accent);color:#fff;padding:.2rem .7rem;border-radius:50px;font-size:.72rem;font-weight:600;margin-left:.5rem">${currentUser.role}</span>`;
+  } else {
+    info.style.display = "none";
+  }
+}
+
+async function login() {
+  try {
+    const data = await gql(
+      `mutation($e:String!,$p:String!){login(email:$e,password:$p){token user{id name role}}}`,
+      { e: document.getElementById("login-email").value, p: document.getElementById("login-password").value }
+    );
+    token = data.login.token;
+    currentUser = data.login.user;
+    localStorage.setItem("es_token", token);
+    localStorage.setItem("es_user", JSON.stringify(currentUser));
+    closeModal("login"); updateAuthUI(); loadEvents();
+    toast(`Welcome back, ${currentUser.name}!`);
+  } catch(e) { toast(e.message, "error"); }
+}
+
+async function register() {
+  try {
+    const data = await gql(
+      `mutation($input:RegisterInput!){register(input:$input){token user{id name role}}}`,
+      { input: { name: document.getElementById("reg-name").value, email: document.getElementById("reg-email").value, password: document.getElementById("reg-password").value }}
+    );
+    token = data.register.token;
+    currentUser = data.register.user;
+    localStorage.setItem("es_token", token);
+    localStorage.setItem("es_user", JSON.stringify(currentUser));
+    closeModal("register"); updateAuthUI();
+    toast(`Account created! Welcome, ${currentUser.name}!`);
+  } catch(e) { toast(e.message, "error"); }
+}
+
+function logout() {
+  token = null; currentUser = null;
+  localStorage.removeItem("es_token"); localStorage.removeItem("es_user");
+  updateAuthUI(); showPage("events"); loadEvents();
+  toast("Logged out successfully");
+}
+
+async function loadEvents() {
+  const search = document.getElementById("search-input").value;
+  const filters = {};
+  if (activeFilter) filters.status = activeFilter;
+  if (search) filters.search = search;
+  document.getElementById("events-grid").innerHTML =
+    [1,2,3].map(() => `<div class="card skeleton" style="height:220px"></div>`).join("");
+  try {
+    const data = await gql(`
+      query($f:EventFilters){events(filters:$f,limit:20){
+        totalCount edges{
+          id title description location startDate endDate capacity status
+          attendeeCount spotsLeft isUserRsvped
+          category{name icon color}
+          organizer{id name}
+        }
+      }}`, { f: filters });
+    renderEvents(data.events.edges);
+  } catch(e) {
+    document.getElementById("events-grid").innerHTML =
+      `<div class="empty-state"><div class="icon">⚠️</div><p>${e.message}</p></div>`;
+  }
+}
+
+function isOwner(organizerId) {
+  return currentUser && (currentUser.id === organizerId || currentUser.role === "ORGANIZER");
+}
+
+function renderEvents(events) {
+  const grid = document.getElementById("events-grid");
+  if (!events.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="icon">🔍</div><p>No events found</p></div>`;
+    return;
+  }
+  grid.innerHTML = events.map(ev => {
+    const start = new Date(ev.startDate);
+    const pct = Math.min(100, Math.round(((ev.capacity - ev.spotsLeft) / ev.capacity) * 100));
+    const ownerActions = isOwner(ev.organizer.id) ? `
+      <div class="owner-actions">
+        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openUpdateModal('${ev.id}','${ev.title.replace(/'/g,"\\'")}','${ev.description.replace(/'/g,"\\'")}','${ev.location}',${ev.capacity},'${ev.status}')">✏️ Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteEvent('${ev.id}','${ev.title.replace(/'/g,"\\'")}')">🗑️ Delete</button>
+      </div>` : "";
+    return `
+      <div class="card event-card" onclick="openEvent('${ev.id}')">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <span class="status-badge status-${ev.status}">${ev.status.toLowerCase()}</span>
+          <span style="font-size:1.4rem">${ev.category.icon}</span>
+        </div>
+        <div class="event-title">${ev.title}</div>
+        <p style="color:var(--muted);font-size:.85rem;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${ev.description}</p>
+        <div class="event-meta">
+          <span class="meta-pill">📅 ${start.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>
+          <span class="meta-pill">📍 ${ev.location}</span>
+          <span class="meta-pill" style="color:${ev.category.color}">${ev.category.name}</span>
+        </div>
+        <div class="capacity-bar"><div class="capacity-fill" style="width:${pct}%"></div></div>
+        <div class="event-footer">
+          <span style="font-size:.8rem;color:var(--muted)">${ev.spotsLeft} spots left · ${ev.attendeeCount} going</span>
+          ${ev.isUserRsvped ? `<span style="font-size:.8rem;color:var(--success)">✓ RSVP'd</span>` : ""}
+        </div>
+        ${ownerActions}
+      </div>`;
+  }).join("");
+}
+
+async function openEvent(id) {
+  document.getElementById("detail-content").innerHTML =
+    `<div style="text-align:center;padding:3rem"><div class="spinner" style="margin:0 auto"></div></div>`;
+  openModal("detail");
+  try {
+    const data = await gql(`
+      query($id:ID!){event(id:$id){
+        id title description location startDate endDate capacity status
+        attendeeCount spotsLeft isUserRsvped
+        organizer{id name}
+        category{name icon color}
+        weather{temperature feelsLike description icon humidity windSpeed}
+        forecast{cityName days{date tempMin tempMax description icon precipitation}}
+        rsvps{status user{name}}
+      }}`, { id });
+    renderDetail(data.event);
+  } catch(e) {
+    document.getElementById("detail-content").innerHTML = `<p style="color:var(--error)">${e.message}</p>`;
+  }
+}
+
+function renderDetail(ev) {
+  const start = new Date(ev.startDate);
+  const end = new Date(ev.endDate);
+  const w = ev.weather;
+  const f = ev.forecast;
+  const pct = Math.min(100, Math.round((ev.attendeeCount / ev.capacity) * 100));
+  const canEdit = isOwner(ev.organizer.id);
+
+  document.getElementById("detail-content").innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
+      <div>
+        <span class="status-badge status-${ev.status}" style="margin-bottom:.5rem;display:inline-block">${ev.status}</span>
+        <h2 style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800">${ev.title}</h2>
+        <p style="color:var(--muted);font-size:.85rem;margin-top:.25rem">By ${ev.organizer.name} · ${ev.category.icon} ${ev.category.name}</p>
+      </div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        ${canEdit ? `
+          <button class="btn btn-ghost btn-sm" onclick="closeModal('detail');openUpdateModal('${ev.id}','${ev.title.replace(/'/g,"\\'")}','${ev.description.replace(/'/g,"\\'")}','${ev.location}',${ev.capacity},'${ev.status}')">✏️ Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="closeModal('detail');deleteEvent('${ev.id}','${ev.title.replace(/'/g,"\\'")}')">🗑️ Delete</button>
+        ` : ""}
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('detail')">✕ Close</button>
+      </div>
+    </div>
+
+    <div class="event-detail">
+      <div>
+        <p style="color:var(--muted);line-height:1.7;margin-bottom:1.5rem">${ev.description}</p>
+        <div style="display:flex;flex-wrap:wrap;gap:.75rem;margin-bottom:1.5rem">
+          <div class="meta-pill" style="padding:.5rem 1rem">📅 ${start.toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric'})} – ${end.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
+          <div class="meta-pill" style="padding:.5rem 1rem">📍 ${ev.location}</div>
+          <div class="meta-pill" style="padding:.5rem 1rem">👥 ${ev.attendeeCount} / ${ev.capacity} attending</div>
+        </div>
+
+        ${f ? `
+        <div class="section-title">5-Day Forecast</div>
+        <div style="display:flex;gap:.5rem;overflow-x:auto;padding-bottom:.5rem;margin-bottom:1.5rem">
+          ${f.days.map(d => `
+            <div style="min-width:80px;text-align:center;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.75rem .5rem">
+              <div style="font-size:.7rem;color:var(--muted)">${new Date(d.date).toLocaleDateString('en-US',{weekday:'short'})}</div>
+              <img src="${d.icon}" width="36" height="36" alt="${d.description}" />
+              <div style="font-size:.85rem;font-weight:600">${d.tempMax}°</div>
+              <div style="font-size:.75rem;color:var(--muted)">${d.tempMin}°</div>
+              ${d.precipitation > 20 ? `<div style="font-size:.7rem;color:#3b82f6">💧${d.precipitation}%</div>` : ""}
+            </div>`).join("")}
+        </div>` : ""}
+
+        <div class="section-title">Who's Going (${ev.rsvps.length})</div>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem">
+          ${ev.rsvps.slice(0,10).map(r => `
+            <div class="meta-pill">
+              ${r.status==='GOING'?'✅':r.status==='MAYBE'?'🤔':'❌'} ${r.user.name}
+            </div>`).join("") || '<p style="color:var(--muted);font-size:.85rem">No RSVPs yet. Be the first!</p>'}
+        </div>
+      </div>
+
+      <div>
+        ${w ? `
+        <div class="section-title">Current Weather</div>
+        <div class="weather-widget" style="margin-bottom:1.5rem">
+          <img src="${w.icon}" width="56" height="56" alt="${w.description}" />
+          <div>
+            <div class="weather-temp">${w.temperature}°C</div>
+            <div class="weather-desc">${w.description}</div>
+            <div style="font-size:.78rem;color:var(--muted);margin-top:.25rem">
+              Feels ${w.feelsLike}° · 💧${w.humidity}% · 💨${w.windSpeed}m/s
+            </div>
+          </div>
+        </div>` : ""}
+
+        <div class="card" style="margin-bottom:1rem">
+          <div class="section-title">Capacity</div>
+          <div class="capacity-bar" style="height:8px"><div class="capacity-fill" style="width:${pct}%"></div></div>
+          <div style="font-size:.82rem;color:var(--muted);margin-top:.5rem">${ev.spotsLeft} spots remaining</div>
+        </div>
+
+        ${ev.status !== 'CANCELLED' && ev.status !== 'COMPLETED' ? `
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          ${!token
+            ? `<button class="btn btn-primary" onclick="closeModal('detail');openModal('login')">Log in to RSVP</button>`
+            : ev.isUserRsvped
+            ? `<div id="ticket-${ev.id}" style="display:none;background:linear-gradient(135deg,rgba(124,111,247,.1),rgba(244,114,182,.08));border:2px dashed var(--accent);border-radius:var(--radius);padding:1.25rem;text-align:center;margin-bottom:.75rem">
+                <div style="font-size:1.5rem;margin-bottom:.4rem">🎫</div>
+                <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:.95rem">YOUR TICKET</div>
+                <div style="font-size:.85rem;color:var(--muted);margin:.4rem 0">${ev.title}</div>
+                <div style="font-size:.85rem;font-weight:600">${currentUser.name}</div>
+                <div style="display:inline-block;background:rgba(22,163,74,.15);color:var(--success);padding:.2rem .75rem;border-radius:50px;font-size:.78rem;font-weight:600;margin:.4rem 0">✅ GOING</div>
+                <div style="font-size:.78rem;color:var(--muted)">${new Date(ev.startDate).toLocaleDateString('en-US',{month:'short',day:'numeric'})} · ${ev.location}</div>
+              </div>
+              <button class="btn btn-primary" style="width:100%;margin-bottom:.5rem" onclick="document.getElementById('ticket-${ev.id}').style.display=document.getElementById('ticket-${ev.id}').style.display==='none'?'block':'none'">🎫 View My Ticket</button>
+              <button class="btn btn-ghost" style="width:100%" onclick="cancelRsvp('${ev.id}')">Cancel RSVP</button>`
+            : `<button class="btn btn-primary" onclick="rsvp('${ev.id}','GOING')">✅ I'm Going</button>
+               <button class="btn btn-ghost" onclick="rsvp('${ev.id}','MAYBE')">🤔 Maybe</button>`}
+        </div>` : ""}
+      </div>
+    </div>`;
+}
+
+async function rsvp(eventId, status) {
+  try {
+    await gql(`mutation($eventId:ID!,$status:RSVPStatus!){createRsvp(eventId:$eventId,status:$status){id status}}`, { eventId, status });
+    toast(status === "GOING" ? "🎉 You're going!" : "RSVP saved as Maybe");
+    openEvent(eventId); loadEvents();
+  } catch(e) { toast(e.message, "error"); }
+}
+
+async function cancelRsvp(eventId) {
+  try {
+    await gql(`mutation($eventId:ID!){deleteRsvp(eventId:$eventId)}`, { eventId });
+    toast("RSVP cancelled");
+    openEvent(eventId); loadEvents();
+  } catch(e) { toast(e.message, "error"); }
+}
+
+async function loadCategories() {
+  try {
+    const data = await gql(`query{categories{id name icon}}`);
+    const sel = document.getElementById("ev-category");
+    sel.innerHTML = data.categories.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join("");
+  } catch {}
+}
+
+async function submitCreateEvent() {
+  const input = {
+    title:       document.getElementById("ev-title").value,
+    description: document.getElementById("ev-desc").value,
+    location:    document.getElementById("ev-location").value,
+    startDate:   new Date(document.getElementById("ev-start").value).toISOString(),
+    endDate:     new Date(document.getElementById("ev-end").value).toISOString(),
+    capacity:    parseInt(document.getElementById("ev-capacity").value),
+    categoryId:  document.getElementById("ev-category").value,
+  };
+  try {
+    await gql(`mutation($input:CreateEventInput!){createEvent(input:$input){id title}}`, { input });
+    closeModal("create");
+    toast("Event created! 🎉");
+    loadEvents();
+  } catch(e) { toast(e.message, "error"); }
+}
+
+function openUpdateModal(id, title, description, location, capacity, status) {
+  document.getElementById("upd-id").value       = id;
+  document.getElementById("upd-title").value    = title;
+  document.getElementById("upd-desc").value     = description;
+  document.getElementById("upd-location").value = location;
+  document.getElementById("upd-capacity").value = capacity;
+  document.getElementById("upd-status").value   = status;
+  openModal("update");
+}
+
+async function submitUpdateEvent() {
+  const id = document.getElementById("upd-id").value;
+  const input = {
+    title:       document.getElementById("upd-title").value,
+    description: document.getElementById("upd-desc").value,
+    location:    document.getElementById("upd-location").value,
+    capacity:    parseInt(document.getElementById("upd-capacity").value),
+    status:      document.getElementById("upd-status").value,
+  };
+  try {
+    await gql(`mutation($id:ID!,$input:UpdateEventInput!){updateEvent(id:$id,input:$input){id title}}`, { id, input });
+    closeModal("update");
+    toast("Event updated! ✅");
+    loadEvents();
+  } catch(e) { toast(e.message, "error"); }
+}
+
+async function deleteEvent(id, title) {
+  if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
+  try {
+    await gql(`mutation($id:ID!){deleteEvent(id:$id)}`, { id });
+    toast("Event deleted");
+    loadEvents();
+  } catch(e) { toast(e.message, "error"); }
+}
+
+async function loadOrganizerDashboard() {
+  try {
+    const eventsData = await gql(`
+      query($f:EventFilters){events(filters:$f,limit:50){
+        edges{id title location startDate status capacity attendeeCount
+          category{name icon}
+          rsvps{status user{name email}}
+        }
+      }}`, { f: {} });
+
+    const allEvents = eventsData.events.edges;
+
+    // My Events table
+    document.getElementById("my-events-list").innerHTML = allEvents.length === 0
+      ? `<p style="color:var(--muted);text-align:center;padding:2rem">No events yet. Create your first!</p>`
+      : `<table class="admin-table">
+          <thead><tr><th>Event</th><th>Date</th><th>Location</th><th>Status</th><th>Attendees</th><th>Actions</th></tr></thead>
+          <tbody>
+            ${allEvents.map(ev => `
+              <tr>
+                <td><strong>${ev.title}</strong><br><span style="font-size:.75rem;color:var(--muted)">${ev.category.icon} ${ev.category.name}</span></td>
+                <td style="color:var(--muted)">${new Date(ev.startDate).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</td>
+                <td style="color:var(--muted)">${ev.location}</td>
+                <td><span class="status-badge status-${ev.status}">${ev.status.toLowerCase()}</span></td>
+                <td>${ev.attendeeCount}/${ev.capacity}</td>
+                <td>
+                  <div style="display:flex;gap:.4rem">
+                    <button class="btn btn-ghost btn-sm" onclick="openUpdateModal('${ev.id}','${ev.title.replace(/'/g,"\\'")}','','${ev.location}',${ev.capacity},'${ev.status}')">✏️ Edit</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteEvent('${ev.id}','${ev.title.replace(/'/g,"\\'")}')">🗑️ Delete</button>
+                  </div>
+                </td>
+              </tr>`).join("")}
+          </tbody>
+        </table>`;
+
+    // Who RSVPd
+    const rsvpHTML = allEvents.map(ev => {
+      if (!ev.rsvps.length) return "";
+      return `
+        <div style="margin-bottom:1.5rem">
+          <div style="font-weight:600;margin-bottom:.75rem">${ev.title}</div>
+          <table class="admin-table">
+            <thead><tr><th>Name</th><th>Email</th><th>Status</th></tr></thead>
+            <tbody>
+              ${ev.rsvps.map(r => `
+                <tr>
+                  <td>${r.user.name}</td>
+                  <td style="color:var(--muted)">${r.user.email}</td>
+                  <td>${r.status==='GOING'?'✅ Going':r.status==='MAYBE'?'🤔 Maybe':'❌ Not Going'}</td>
+                </tr>`).join("")}
+            </tbody>
+          </table>
+        </div>`;
+    }).join("");
+
+    document.getElementById("my-rsvps-list").innerHTML = rsvpHTML ||
+      `<p style="color:var(--muted);text-align:center;padding:2rem">No RSVPs yet.</p>`;
+
+    // All users
+    const usersData = await gql(`query{users{id name email role createdAt rsvpCount}}`);
+    document.getElementById("organizer-users").innerHTML = `
+      <table class="admin-table">
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>RSVPs</th><th>Joined</th></tr></thead>
+        <tbody>
+          ${usersData.users.map(u => `
+            <tr>
+              <td><strong>${u.name}</strong></td>
+              <td style="color:var(--muted)">${u.email}</td>
+              <td><span class="role-badge role-${u.role}">${u.role}</span></td>
+              <td>${u.rsvpCount}</td>
+              <td style="color:var(--muted)">${new Date(u.createdAt).toLocaleDateString()}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>`;
+
+  } catch(e) { toast(e.message, "error"); }
+}
+
+function setFilter(status) {
+  activeFilter = status;
+  document.querySelectorAll(".filter-chip").forEach(c =>
+    c.classList.toggle("active", c.dataset.status === status));
+  loadEvents();
+}
+
+function debounceSearch() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(loadEvents, 350);
+}
+
+updateAuthUI();
+loadCategories();
+loadEvents();
+</script>
+</body>
+</html>

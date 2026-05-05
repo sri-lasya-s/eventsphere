@@ -1,0 +1,106 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  avatar    String?
+  role      Role     @default(ATTENDEE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events Event[]  @relation("OrganizerEvents")
+  rsvps  RSVP[]
+
+  @@index([email])
+  @@map("users")
+}
+
+model Category {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  description String?
+  color       String  @default("#6366f1")
+  icon        String  @default("📅")
+
+  events Event[]
+
+  @@map("categories")
+}
+
+model Event {
+  id          String      @id @default(uuid())
+  title       String
+  description String
+  location    String
+  latitude    Float?
+  longitude   Float?
+  startDate   DateTime
+  endDate     DateTime
+  capacity    Int
+  status      EventStatus @default(UPCOMING)
+  imageUrl    String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  organizerId String
+  organizer   User     @relation("OrganizerEvents", fields: [organizerId], references: [id], onDelete: Cascade)
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  rsvps RSVP[]
+
+  @@index([organizerId])
+  @@index([categoryId])
+  @@index([startDate])
+  @@index([status])
+  @@map("events")
+}
+
+model RSVP {
+  id        String     @id @default(uuid())
+  status    RSVPStatus @default(GOING)
+  note      String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId])
+  @@index([eventId])
+  @@index([userId])
+  @@map("rsvps")
+}
+
+enum Role {
+  
+  ORGANIZER
+  ATTENDEE
+}
+
+enum EventStatus {
+  UPCOMING
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum RSVPStatus {
+  GOING
+  MAYBE
+  NOT_GOING
+}
