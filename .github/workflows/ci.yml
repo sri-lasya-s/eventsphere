@@ -93,8 +93,6 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:latest
             ${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
   # ── Deploy (example: Railway / Render via webhook) ──────────
   deploy:
