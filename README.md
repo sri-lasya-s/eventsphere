@@ -1,4 +1,4 @@
-# ⚡ EventSphere
+#  EventSphere
 
 > **Event management & discovery platform** — create, discover, and RSVP to events with real-time weather forecasts powered by OpenWeatherMap.
 
