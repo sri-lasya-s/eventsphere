@@ -177,13 +177,8 @@
       <div id="my-events-list"></div>
     </div>
 
-    <div class="card" style="margin-bottom:2rem">
-      <div class="section-title">Who RSVP'd to My Events</div>
-      <div id="my-rsvps-list"></div>
-    </div>
-
     <div class="card">
-      <div class="section-title">All Users</div>
+<div class="section-title">Users Who RSVP'd to My Events</div>
       <div id="organizer-users" style="overflow-x:auto"></div>
     </div>
   </div>
@@ -664,45 +659,31 @@ async function loadOrganizerDashboard() {
           </tbody>
         </table>`;
 
-    // Who RSVPd
-    const rsvpHTML = allEvents.map(ev => {
-      if (!ev.rsvps.length) return "";
-      return `
-        <div style="margin-bottom:1.5rem">
-          <div style="font-weight:600;margin-bottom:.75rem">${ev.title}</div>
-          <table class="admin-table">
-            <thead><tr><th>Name</th><th>Email</th><th>Status</th></tr></thead>
-            <tbody>
-              ${ev.rsvps.map(r => `
-                <tr>
-                  <td>${r.user.name}</td>
-                  <td style="color:var(--muted)">${r.user.email}</td>
-                  <td>${r.status==='GOING'?'✅ Going':r.status==='MAYBE'?'🤔 Maybe':'❌ Not Going'}</td>
-                </tr>`).join("")}
-            </tbody>
-          </table>
-        </div>`;
-    }).join("");
+   
+   // Only users who RSVP'd to organizer's events
+    const rsvpUsers = [];
+    allEvents.forEach(ev => {
+      ev.rsvps.forEach(r => {
+        if (!rsvpUsers.find(u => u.email === r.user.email)) {
+          rsvpUsers.push(r.user);
+        }
+      });
+    });
 
-    document.getElementById("my-rsvps-list").innerHTML = rsvpHTML ||
-      `<p style="color:var(--muted);text-align:center;padding:2rem">No RSVPs yet.</p>`;
-
-    // All users
-    const usersData = await gql(`query{users{id name email role createdAt rsvpCount}}`);
-    document.getElementById("organizer-users").innerHTML = `
-      <table class="admin-table">
-        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>RSVPs</th><th>Joined</th></tr></thead>
-        <tbody>
-          ${usersData.users.map(u => `
-            <tr>
-              <td><strong>${u.name}</strong></td>
-              <td style="color:var(--muted)">${u.email}</td>
-              <td><span class="role-badge role-${u.role}">${u.role}</span></td>
-              <td>${u.rsvpCount}</td>
-              <td style="color:var(--muted)">${new Date(u.createdAt).toLocaleDateString()}</td>
-            </tr>`).join("")}
-        </tbody>
-      </table>`;
+    document.getElementById("organizer-users").innerHTML = rsvpUsers.length === 0
+      ? `<p style="color:var(--muted);text-align:center;padding:2rem">No users have RSVP'd to your events yet.</p>`
+      : `<table class="admin-table">
+          <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Event</th></tr></thead>
+          <tbody>
+            ${allEvents.map(ev => ev.rsvps.map(r => `
+              <tr>
+                <td><strong>${r.user.name}</strong></td>
+                <td style="color:var(--muted)">${r.user.email}</td>
+                <td>${r.status==='GOING'?'✅ Going':r.status==='MAYBE'?'🤔 Maybe':'❌ Not Going'}</td>
+                <td style="color:var(--muted)">${ev.title}</td>
+              </tr>`).join("")).join("")}
+          </tbody>
+        </table>`;
 
   } catch(e) { toast(e.message, "error"); }
 }
