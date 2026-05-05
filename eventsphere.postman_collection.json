@@ -1,0 +1,323 @@
+{
+  "info": {
+    "name": "EventSphere API",
+    "description": "Complete API collection for EventSphere - Event Management Platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:4000/graphql"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"mutation {\\n  register(input: {\\n    name: \\\"Test User\\\"\\n    email: \\\"test@example.com\\\"\\n    password: \\\"Password123!\\\"\\n  }) {\\n    token\\n    user {\\n      id\\n      name\\n      role\\n    }\\n  }\\n}\"}"
+            },
+            "url": "{{base_url}}"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.data && json.data.login) {",
+                  "  pm.collectionVariables.set('token', json.data.login.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"mutation {\\n  login(\\n    email: \\\"organizer@eventsphere.com\\\"\\n    password: \\\"Password123!\\\"\\n  ) {\\n    token\\n    user {\\n      id\\n      name\\n      role\\n    }\\n  }\\n}\"}"
+            },
+            "url": "{{base_url}}"
+          }
+        },
+        {
+          "name": "Get Current User (me)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query {\\n  me {\\n    id\\n    name\\n    email\\n    role\\n  }\\n}\"}"
+            },
+            "url": "{{base_url}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Events",
+      "item": [
+        {
+          "name": "Get All Events",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query {\\n  events {\\n    totalCount\\n    hasNextPage\\n    edges {\\n      id\\n      title\\n      description\\n      location\\n      startDate\\n      endDate\\n      capacity\\n      status\\n      attendeeCount\\n      spotsLeft\\n      category {\\n        name\\n        icon\\n      }\\n      organizer {\\n        name\\n      }\\n    }\\n  }\\n}\"}"
+            },
+            "url": "{{base_url}}"
+          }
+        },
+        {
+          "name": "Get Events with Filter",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query {\\n  events(filters: { status: UPCOMING }, limit: 5) {\\n    totalCount\\n    edges {\\n      id\\n      title\\n      status\\n      location\\n    }\\n  }\\n}\"}"
+            },
+            "url": "{{base_url}}"
+          }
+        },
+        {
+          "name": "Get Single Event",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query {\\n  event(id: \\\"REPLACE_WITH_EVENT_ID\\\") {\\n    id\\n    title\\n    description\\n    location\\n    startDate\\n    status\\n    attendeeCount\\n    spotsLeft\\n    weather {\\n      temperature\\n      description\\n      humidity\\n    }\\n    forecast {\\n      cityName\\n      days {\\n        date\\n        tempMin\\n        tempMax\\n        description\\n      }\\n    }\\n    rsvps {\\n      status\\n      user {\\n        name\\n      }\\n    }\\n  }\\n}\"}"
+            },
+            "url": "{{base_url}}"
+          }
+        },
+        {
+          "name": "Create Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"mutation {\\n  createEvent(input: {\\n    title: \\\"New Tech Meetup\\\"\\n    description: \\\"Monthly technology meetup for developers\\\"\\n    location: \\\"Chicago, IL\\\"\\n    startDate: \\\"2025-08-15T18:00:00Z\\\"\\n    endDate: \\\"2025-08-15T21:00:00Z\\\"\\n    capacity: 100\\n    categoryId: \\\"REPLACE_WITH_CATEGORY_ID\\\"\\n  }) {\\n    id\\n    title\\n    status\\n  }\\n}\"}"
+            },
+            "url": "{{base_url}}"
+          }
+        },
+        {
+          "name": "Update Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"mutation {\\n  updateEvent(\\n    id: \\\"REPLACE_WITH_EVENT_ID\\\"\\n    input: {\\n      title: \\\"Updated Event Title\\\"\\n      capacity: 200\\n      status: ONGOING\\n    }\\n  ) {\\n    id\\n    title\\n    capacity\\n    status\\n  }\\n}\"}"
+            },
+            "url": "{{base_url}}"
+          }
+        },
+        {
+          "name": "Delete Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"mutation {\\n  deleteEvent(id: \\\"REPLACE_WITH_EVENT_ID\\\")\\n}\"}"
+            },
+            "url": "{{base_url}}"
+          }
+        },
+        {
+          "name": "Cancel Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"mutation {\\n  cancelEvent(id: \\\"REPLACE_WITH_EVENT_ID\\\") {\\n    id\\n    title\\n    status\\n  }\\n}\"}"
+            },
+            "url": "{{base_url}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "RSVPs",
+      "item": [
+        {
+          "name": "Create RSVP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"mutation {\\n  createRsvp(\\n    eventId: \\\"REPLACE_WITH_EVENT_ID\\\"\\n    status: GOING\\n    note: \\\"Looking forward to it!\\\"\\n  ) {\\n    id\\n    status\\n    note\\n    user {\\n      name\\n    }\\n    event {\\n      title\\n    }\\n  }\\n}\"}"
+            },
+            "url": "{{base_url}}"
+          }
+        },
+        {
+          "name": "Update RSVP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"mutation {\\n  updateRsvp(\\n    eventId: \\\"REPLACE_WITH_EVENT_ID\\\"\\n    status: MAYBE\\n  ) {\\n    id\\n    status\\n    user {\\n      name\\n    }\\n  }\\n}\"}"
+            },
+            "url": "{{base_url}}"
+          }
+        },
+        {
+          "name": "Delete RSVP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"mutation {\\n  deleteRsvp(eventId: \\\"REPLACE_WITH_EVENT_ID\\\")\\n}\"}"
+            },
+            "url": "{{base_url}}"
+          }
+        },
+        {
+          "name": "My RSVPs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query {\\n  myRsvps {\\n    id\\n    status\\n    event {\\n      title\\n      location\\n      startDate\\n    }\\n  }\\n}\"}"
+            },
+            "url": "{{base_url}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Get All Categories",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query {\\n  categories {\\n    id\\n    name\\n    icon\\n    color\\n    description\\n    eventCount\\n  }\\n}\"}"
+            },
+            "url": "{{base_url}}"
+          }
+        },
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"mutation {\\n  createCategory(\\n    name: \\\"Art & Culture\\\"\\n    description: \\\"Art exhibitions and cultural events\\\"\\n    color: \\\"#f59e0b\\\"\\n    icon: \\\"🎨\\\"\\n  ) {\\n    id\\n    name\\n    icon\\n  }\\n}\"}"
+            },
+            "url": "{{base_url}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query {\\n  users {\\n    id\\n    name\\n    email\\n    role\\n    rsvpCount\\n    createdAt\\n  }\\n}\"}"
+            },
+            "url": "{{base_url}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Weather",
+      "item": [
+        {
+          "name": "Get Current Weather",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query {\\n  weatherForLocation(location: \\\"Chicago, IL\\\") {\\n    temperature\\n    feelsLike\\n    description\\n    icon\\n    humidity\\n    windSpeed\\n    cityName\\n    country\\n  }\\n}\"}"
+            },
+            "url": "{{base_url}}"
+          }
+        },
+        {
+          "name": "Get 5-Day Forecast",
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"query\":\"query {\\n  forecastForLocation(location: \\\"Chicago, IL\\\") {\\n    cityName\\n    country\\n    days {\\n      date\\n      tempMin\\n      tempMax\\n      description\\n      precipitation\\n    }\\n  }\\n}\"}"
+            },
+            "url": "{{base_url}}"
+          }
+        }
+      ]
+    }
+  ]
+}
