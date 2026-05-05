@@ -267,3 +267,32 @@ eventsphere/
 8. **Analytics dashboard** — admin view with event performance metrics
 9. **Recurring events** — support weekly/monthly recurring event patterns
 10. **Mobile app** — React Native client consuming the same GraphQL API
+
+## Deployment (Railway)
+
+EventSphere can be deployed to Railway in minutes.
+
+### Steps
+
+1. Go to [railway.app](https://railway.app) and sign up for free
+2. Click **New Project** → **Deploy from GitHub repo**
+3. Select your `eventsphere` repository
+4. Add a PostgreSQL database:
+   - Click **New** → **Database** → **PostgreSQL**
+5. Set environment variables in Railway dashboard:
+
+DATABASE_URL=<auto-filled by Railway>
+JWT_SECRET=your-secret-key
+OPENWEATHER_API_KEY=your-key
+NODE_ENV=production
+PORT=4000
+
+6. Run migrations:
+   - Go to Railway shell and run: `npx prisma migrate deploy`
+7. Your app will be live at the Railway-provided URL
+
+### Docker Deployment
+```bash
+docker compose up -d
+```
+This starts the app and PostgreSQL database together.
